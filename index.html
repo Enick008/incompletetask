@@ -61,6 +61,7 @@
   <table>
     <thead>
       <tr>
+        <th>ลำดับที่</th>
         <th>ชื่อผู้แจ้ง</th>
         <th>ตำบล</th>
         <th>หมู่ที่</th>
@@ -105,7 +106,8 @@
       response.data.forEach(row => {
         const tr = document.createElement("tr");
         tr.innerHTML = `
-          <td>${row.name || "-"}</td>
+          <td>\${index + 1}</td>
+          <td>\${row.name || "-"}</td>
           <td>${row.subdistrict || "-"}</td>
           <td>${row.villageNumber || "-"}</td>
           <td>${row.phone || "-"}</td>
@@ -116,7 +118,7 @@
 
       for (let i = 0; i < 2; i++) {
         const emptyRow = document.createElement("tr");
-        emptyRow.innerHTML = `<td colspan="4">&nbsp;</td>`;
+        emptyRow.innerHTML = `<td></td><td></td><td></td><td></td><td></td><td></td>`;
         tbody.appendChild(emptyRow);
       }
     }
