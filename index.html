@@ -64,7 +64,7 @@
         <th>ชื่อผู้แจ้ง</th>
         <th>ตำบล</th>
         <th>หมู่ที่</th>
-        
+        <th>เบอร์โทร</th>
         <th>ค่าบริการ</th>
         
       </tr>
@@ -108,12 +108,17 @@
           <td>${row.name || "-"}</td>
           <td>${row.subdistrict || "-"}</td>
           <td>${row.villageNumber || "-"}</td>
-          
+          <td>${row.phone || "-"}</td>
           <td></td>
-          
         `;
         tbody.appendChild(tr);
       });
+
+      for (let i = 0; i < 2; i++) {
+        const emptyRow = document.createElement("tr");
+        emptyRow.innerHTML = `<td colspan="4">&nbsp;</td>`;
+        tbody.appendChild(emptyRow);
+      }
     }
 
     function printEntry(encoded) {
