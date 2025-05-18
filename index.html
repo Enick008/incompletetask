@@ -98,7 +98,7 @@
       tbody.innerHTML = "";
 
       if (!response.success || response.data.length === 0) {
-        tbody.innerHTML = `<tr><td colspan='6' style='text-align:center; color:#999;'>ไม่พบรายการ</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan='5' style='text-align:center; color:#999;'>ไม่พบรายการ</td></tr>`;
         return;
       }
 
@@ -116,7 +116,7 @@
 
       for (let i = 0; i < 2; i++) {
         const emptyRow = document.createElement("tr");
-        emptyRow.innerHTML = `<td></td><td></td><td></td><td></td><td></td><td></td>`;
+        emptyRow.innerHTML = `<td></td><td></td><td></td><td></td><td></td>`;
         tbody.appendChild(emptyRow);
       }
     }
