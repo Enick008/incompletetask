@@ -75,22 +75,22 @@
   <script>
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyyahkXofdS557MnH_9nHJm7K_a5Lo7LNIp87_E4ly2wiJ9zg50tZjNkWIXha1ExVcUpA/exec";
 
-    function loadIncomplete() {
-      const staff = document.getElementById("staffFilter").value;
-      if (!staff) return alert("กรุณาเลือกพนักงาน");
+   function loadIncomplete() {
+  const staff = document.getElementById("staffFilter").value;
+  if (!staff) return alert("กรุณาเลือกพนักงาน");
 
-      const callbackName = "renderIncomplete" + Math.floor(Math.random() * 100000);
-      const script = document.createElement("script");
-      window[callbackName] = function(response) {
-        delete window[callbackName];
-        document.body.removeChild(script);
-        renderIncomplete(response);
-      };
+  const callbackName = "renderIncomplete" + Math.floor(Math.random() * 100000);
+  const script = document.createElement("script"); // ✅ สร้างแค่ครั้งเดียว
+  window[callbackName] = function(response) {
+    delete window[callbackName];
+    document.body.removeChild(script);
+    renderIncomplete(response);
+  };
 
-      const script = document.createElement("script");
-      script.src = `${SCRIPT_URL}?action=getIncompleteByStaff&staff=${encodeURIComponent(staff)}&callback=${callbackName}`;
-      document.body.appendChild(script);
-    }
+  script.src = `${SCRIPT_URL}?action=getIncompleteByStaff&staff=${encodeURIComponent(staff)}&callback=${callbackName}`;
+  document.body.appendChild(script);
+}
+
 
     function renderIncomplete(response) {
       const tbody = document.getElementById("resultBody");
