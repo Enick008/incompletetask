@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>รายการที่ยังไม่ดำเนินการ</title>
+  <link href="https://fonts.googleapis.com/css2?family=Prompt&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Prompt', sans-serif;
+      background-color: #fff0f5;
+      padding: 20px;
+    }
+    h1 {
+      color: #c71585;
+      text-align: center;
+    }
+    label, select, button {
+      font-size: 1rem;
+      margin: 10px 0;
+      display: block;
+    }
+    select, button {
+      padding: 8px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+    }
+    table {
+      width: 100%;
+      margin-top: 20px;
+      border-collapse: collapse;
+      background-color: #fff;
+    }
+    th, td {
+      padding: 10px;
+      border: 1px solid #ccc;
+      text-align: left;
+    }
+    th {
+      background-color: #ffe4ec;
+    }
+  </style>
+</head>
+<body>
+  <h1>รายการที่ยังไม่ดำเนินการ</h1>
+
+  <label for="staffFilter">เลือกพนักงาน:</label>
+  <select id="staffFilter">
+    <option value="">-- เลือก --</option>
+    <option value="ศุภชัย เปี่ยมประถม">ศุภชัย เปี่ยมประถม</option>
+    <option value="ไพรลัลย์ คำชาลี">ไพรลัลย์ คำชาลี</option>
+    <option value="ชวลิต ใจแผ้ว">ชวลิต ใจแผ้ว</option>
+    <option value="ชาคริต ปัญญา">ชาคริต ปัญญา</option>
+  </select>
+  <button onclick="loadIncomplete()">แสดงรายการ</button>
+
+  <table>
+    <thead>
+      <tr>
+        <th>ชื่อผู้แจ้ง</th>
+        <th>ตำบล</th>
+        <th>เบอร์โทร</th>
+        <th>จำนวนเงิน</th>
+        <th>สถานะ</th><th>การจัดการ</th>
+      </tr>
+    </thead>
+    <tbody id="resultBody">
+      <tr><td colspan="6" style="text-align:center; color:#aaa;">กรุณาเลือกพนักงานเพื่อแสดงข้อมูล</td></tr>
+    </tbody>
+  </table>
+
+  <script>
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyyahkXofdS557MnH_9nHJm7K_a5Lo7LNIp87_E4ly2wiJ9zg50tZjNkWIXha1ExVcUpA/exec";
+
+    function loadIncomplete() {
+      const staff = document.getElementById("staffFilter").value;
+      if (!staff) return alert("กรุณาเลือกพนักงาน");
+
+      const callbackName = "renderIncomplete" + Math.floor(Math.random() * 100000);
+      const script = document.createElement("script");
+      window[callbackName] = function(response) {
+        delete window[callbackName];
+        document.body.removeChild(script);
+        renderIncomplete(response);
+      };
+
+      const script = document.createElement("script");
+      script.src = `${SCRIPT_URL}?action=getIncompleteByStaff&staff=${encodeURIComponent(staff)}&callback=${callbackName}`;
+      document.body.appendChild(script);
+    }
+
+    function renderIncomplete(response) {
+      const tbody = document.getElementById("resultBody");
+      tbody.innerHTML = "";
+
+      if (!response.success || response.data.length === 0) {
+        tbody.innerHTML = `<tr><td colspan='5' style='text-align:center; color:#999;'>ไม่พบรายการ</td></tr>`;
+        return;
+      }
+
+      response.data.forEach(row => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${row.name || "-"}</td>
+          <td>${row.subdistrict || "-"}</td>
+          <td>${row.phone || "-"}</td>
+          <td>${row.amount || 0}</td>
+          <td>${row.completed ? "✅" : "❌"}</td><td><button onclick="printEntry('${encodeURIComponent(JSON.stringify(row))}')">🖨️</button> <button onclick="editEntry('${encodeURIComponent(JSON.stringify(row))}')">✏️</button> <button onclick="deleteEntry('${encodeURIComponent(row.timestamp)}')">🗑️</button></td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+  function printEntry(encoded) {
+  const row = JSON.parse(decodeURIComponent(encoded));
+  const printWindow = window.open('', '_blank');
+  printWindow.document.write(`<pre>${JSON.stringify(row, null, 2)}</pre>`);
+  printWindow.print();
+}
+
+function editEntry(encoded) {
+  const row = JSON.parse(decodeURIComponent(encoded));
+  alert("(ตัวอย่าง) แก้ไขข้อมูล: " + row.name);
+  // คุณสามารถเปิด modal หรือฟอร์มจริงได้ที่นี่
+}
+
+function deleteEntry(timestamp) {
+  if (confirm("ต้องการลบรายการนี้ใช่หรือไม่?")) {
+    const callbackName = "deleteCb" + Math.floor(Math.random() * 100000);
+    window[callbackName] = function(response) {
+      delete window[callbackName];
+      alert("ลบเรียบร้อยแล้ว");
+      loadIncomplete();
+    };
+    const script = document.createElement("script");
+    script.src = `${SCRIPT_URL}?action=deleteByTimestamp&timestamp=${encodeURIComponent(timestamp)}&callback=${callbackName}`;
+    document.body.appendChild(script);
+  }
+}
+</script>
+</body>
+</html>
