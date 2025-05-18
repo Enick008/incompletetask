@@ -63,8 +63,7 @@
         <th>ชื่อผู้แจ้ง</th>
         <th>ตำบล</th>
         <th>เบอร์โทร</th>
-        <th>จำนวนเงิน</th>
-        <th>สถานะ</th><th>การจัดการ</th>
+        
       </tr>
     </thead>
     <tbody id="resultBody">
@@ -75,29 +74,28 @@
   <script>
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyyahkXofdS557MnH_9nHJm7K_a5Lo7LNIp87_E4ly2wiJ9zg50tZjNkWIXha1ExVcUpA/exec";
 
-   function loadIncomplete() {
-  const staff = document.getElementById("staffFilter").value;
-  if (!staff) return alert("กรุณาเลือกพนักงาน");
+    function loadIncomplete() {
+      const staff = document.getElementById("staffFilter").value;
+      if (!staff) return alert("กรุณาเลือกพนักงาน");
 
-  const callbackName = "renderIncomplete" + Math.floor(Math.random() * 100000);
-  const script = document.createElement("script"); // ✅ สร้างแค่ครั้งเดียว
-  window[callbackName] = function(response) {
-    delete window[callbackName];
-    document.body.removeChild(script);
-    renderIncomplete(response);
-  };
+      const callbackName = "renderIncomplete" + Math.floor(Math.random() * 100000);
+      const script = document.createElement("script");
+      window[callbackName] = function(response) {
+        delete window[callbackName];
+        document.body.removeChild(script);
+        renderIncomplete(response);
+      };
 
-  script.src = `${SCRIPT_URL}?action=getIncompleteByStaff&staff=${encodeURIComponent(staff)}&callback=${callbackName}`;
-  document.body.appendChild(script);
-}
-
+      script.src = `${SCRIPT_URL}?action=getIncompleteByStaff&staff=${encodeURIComponent(staff)}&callback=${callbackName}`;
+      document.body.appendChild(script);
+    }
 
     function renderIncomplete(response) {
       const tbody = document.getElementById("resultBody");
       tbody.innerHTML = "";
 
       if (!response.success || response.data.length === 0) {
-        tbody.innerHTML = `<tr><td colspan='5' style='text-align:center; color:#999;'>ไม่พบรายการ</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan='6' style='text-align:center; color:#999;'>ไม่พบรายการ</td></tr>`;
         return;
       }
 
@@ -107,39 +105,39 @@
           <td>${row.name || "-"}</td>
           <td>${row.subdistrict || "-"}</td>
           <td>${row.phone || "-"}</td>
-          <td>${row.amount || 0}</td>
-          <td>${row.completed ? "✅" : "❌"}</td><td><button onclick="printEntry('${encodeURIComponent(JSON.stringify(row))}')">🖨️</button> <button onclick="editEntry('${encodeURIComponent(JSON.stringify(row))}')">✏️</button> <button onclick="deleteEntry('${encodeURIComponent(row.timestamp)}')">🗑️</button></td>
+          
         `;
         tbody.appendChild(tr);
       });
     }
-  function printEntry(encoded) {
-  const row = JSON.parse(decodeURIComponent(encoded));
-  const printWindow = window.open('', '_blank');
-  printWindow.document.write(`<pre>${JSON.stringify(row, null, 2)}</pre>`);
-  printWindow.print();
-}
 
-function editEntry(encoded) {
-  const row = JSON.parse(decodeURIComponent(encoded));
-  alert("(ตัวอย่าง) แก้ไขข้อมูล: " + row.name);
-  // คุณสามารถเปิด modal หรือฟอร์มจริงได้ที่นี่
-}
+    function printEntry(encoded) {
+      const row = JSON.parse(decodeURIComponent(encoded));
+      const printWindow = window.open('', '_blank');
+      printWindow.document.write(`<pre>${JSON.stringify(row, null, 2)}</pre>`);
+      printWindow.print();
+    }
 
-function deleteEntry(timestamp) {
-  if (confirm("ต้องการลบรายการนี้ใช่หรือไม่?")) {
-    const callbackName = "deleteCb" + Math.floor(Math.random() * 100000);
-    window[callbackName] = function(response) {
-      delete window[callbackName];
-      alert("ลบเรียบร้อยแล้ว");
-      loadIncomplete();
-    };
-    const script = document.createElement("script");
-    script.src = `${SCRIPT_URL}?action=deleteByTimestamp&timestamp=${encodeURIComponent(timestamp)}&callback=${callbackName}`;
-    document.body.appendChild(script);
-  }
-}
-</script>
+    function editEntry(encoded) {
+      const row = JSON.parse(decodeURIComponent(encoded));
+      alert("(ตัวอย่าง) แก้ไขข้อมูล: " + row.name);
+    }
+
+    function deleteEntry(timestamp) {
+      if (confirm("ต้องการลบรายการนี้ใช่หรือไม่?")) {
+        const callbackName = "deleteCb" + Math.floor(Math.random() * 100000);
+        window[callbackName] = function(response) {
+          delete window[callbackName];
+          alert("ลบเรียบร้อยแล้ว");
+          loadIncomplete();
+        };
+        const script = document.createElement("script");
+        script.src = `${SCRIPT_URL}?action=deleteByTimestamp&timestamp=${encodeURIComponent(timestamp)}&callback=${callbackName}`;
+        document.body.appendChild(script);
+      }
+    }
+  </script>
+
   <footer style="text-align:center; padding:15px; background-color:#ffe4ec; margin-top:30px; font-size:14px;">
     ©2025 ระบบ กองช่างสุขาภิบาล โดย นายธีรศักดิ์ พูลเขาล้าน
   </footer>
