@@ -56,13 +56,16 @@
     <option value="ชาคริต ปัญญา">ชาคริต ปัญญา</option>
   </select>
   <button onclick="loadIncomplete()">แสดงรายการ</button>
+  <button onclick="printTable()">พิมพ์รายการ</button>
 
   <table>
     <thead>
       <tr>
         <th>ชื่อผู้แจ้ง</th>
         <th>ตำบล</th>
-        <th>เบอร์โทร</th>
+        <th>หมู่ที่</th>
+        
+        <th>ค่าบริการ</th>
         
       </tr>
     </thead>
@@ -104,7 +107,9 @@
         tr.innerHTML = `
           <td>${row.name || "-"}</td>
           <td>${row.subdistrict || "-"}</td>
-          <td>${row.phone || "-"}</td>
+          <td>${row.villageNumber || "-"}</td>
+          $1
+          <td></td>
           
         `;
         tbody.appendChild(tr);
@@ -135,6 +140,32 @@
         script.src = `${SCRIPT_URL}?action=deleteByTimestamp&timestamp=${encodeURIComponent(timestamp)}&callback=${callbackName}`;
         document.body.appendChild(script);
       }
+    }
+  
+    function printTable() {
+      const printWindow = window.open('', '_blank');
+      const style = `<style>
+        body { font-family: 'Prompt', sans-serif; padding: 20px; }
+        h2 { text-align: center; color: #c71585; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+        th { background-color: #ffe4ec; }
+      </style>`;
+
+      const selectedStaff = document.getElementById("staffFilter").value || "-";
+      const currentDate = new Date().toLocaleDateString("th-TH", { year: 'numeric', month: 'long', day: 'numeric' });
+      const logo = '<img src="https://upload.wikimedia.org/wikipedia/commons/b/b1/Seal_of_Ko_Samui.png" style="height:80px; display:block; margin:auto;">';
+      const header = `
+        ${logo}
+        <h2 style='text-align:center;'>เทศบาลนครเกาะสมุย<br>รายการมอบหมายงานดูดสิ่งปฏิกูล</h2>
+        <p style='text-align:center;'>พนักงาน: ${selectedStaff} | วันที่มอบหมาย: ${currentDate}</p>
+      `;
+      const tableHTML = document.querySelector('table').outerHTML;
+      const summary = `<p style='margin-top:30px; font-size:16px;'><strong>สรุปผลการทำงาน:</strong> ....................................................<br><strong>รวมค่าบริการ:</strong> ....................................................</p>`;
+      const signature = `<p style='text-align:right; margin-top:50px;'>ผู้มอบหมายงาน ....................................................</p>`;
+      printWindow.document.write(`<html><head><title>พิมพ์รายการ</title>${style}</head><body>${header}${tableHTML}${summary}${signature}</body></html>`);
+      printWindow.document.close();
+      printWindow.print();
     }
   </script>
 
