@@ -5,18 +5,21 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>รายการที่ยังไม่ดำเนินการ</title>
   <link href="https://fonts.googleapis.com/css2?family=Prompt&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <style>
     body {
       font-family: 'Prompt', sans-serif;
       background-color: #fff0f5;
       padding: 20px;
+      font-size: 16px; /* กำหนดขนาดฟอนต์ทั้งหมดเป็น 16px สำหรับการแสดงผลบนหน้าจอ */
     }
     h1 {
       color: #c71585;
       text-align: center;
+      font-size: 16px; /* ปรับขนาด h1 เป็น 16px */
     }
     label, select, button {
-      font-size: 1rem;
+      font-size: 1rem; /* 1rem จะเท่ากับ 16px เนื่องจาก body มี font-size 16px */
       margin: 10px 0;
       display: block;
     }
@@ -32,18 +35,45 @@
       background-color: #fff;
     }
     th, td {
-      padding: 10px;
+      padding: 4px; /* ลด padding เพื่อลดความสูงของช่องในตารางเป็น 4px */
       border: 1px solid #ccc;
       text-align: left;
     }
     th {
       background-color: #ffe4ec;
+      text-align: center; /* ปรับให้ข้อความในหัวตารางอยู่กึ่งกลาง */
+    }
+    /* Style for the Phone Number column to prevent wrapping */
+    .col-phone-number {
+      white-space: nowrap; /* Prevent text wrapping */
+    }
+
+    /* Print-specific styles */
+    @media print {
+      body {
+        font-size: 16px; /* ปรับขนาดฟอนต์เฉพาะในการพิมพ์เป็น 16px */
+      }
+      h1, h2, p, table, th, td {
+        font-size: 16px; /* ตรวจสอบให้แน่ใจว่าองค์ประกอบอื่นๆ ก็ถูกปรับด้วย */
+      }
+      /* Optional: Adjust table layout for print if needed */
+      table {
+        width: 100%;
+        table-layout: auto; /* หรือ fixed ถ้าต้องการควบคุมความกว้างคอลัมน์ */
+      }
+      th, td {
+        word-wrap: break-word; /* Allow long text to wrap within cells */
+        padding: 4px; /* ลด padding เพื่อลดความสูงของช่องในตารางในการพิมพ์เป็น 4px */
+      }
+      th {
+        text-align: center; /* ปรับให้ข้อความในหัวตารางอยู่กึ่งกลางในการพิมพ์ */
+      }
     }
   </style>
 </head>
 <body>
   <header style="text-align:center; background-color:#ffe4ec; padding: 20px;">
-    <img src="https://upload.wikimedia.org/wikipedia/commons/b/b1/Seal_of_Ko_Samui.png" alt="Seal of Ko Samui" style="height:100px; width:auto;">
+    <img src="https://upload.wikimedia.org/wikipedia/commons/b/b1/Seal_of_Ko_Samui.png" alt="ตราสัญลักษณ์เทศบาลนครเกาะสมุย" style="height:100px; width:auto;">
   </header>
   <h1>รายการที่ยังไม่ดำเนินการ</h1>
 
@@ -61,12 +91,12 @@
   <table>
     <thead>
       <tr>
-        <th>ชื่อผู้แจ้ง</th>
-        <th>ตำบล</th>
-        <th>หมู่ที่</th>
-        <th>เบอร์โทร</th>
+        <th>ข้อมูลผู้แจ้ง</th>
+        <th class="col-phone-number">เบอร์โทร</th>
+        <th>ปริมาณ</th>
         <th>ค่าบริการ</th>
-        
+        <th>เลขใบเสร็จ</th>
+        <th>หมายเหตุ</th>
       </tr>
     </thead>
     <tbody id="resultBody">
@@ -79,11 +109,29 @@
 
     function loadIncomplete() {
       const staff = document.getElementById("staffFilter").value;
-      if (!staff) return alert("กรุณาเลือกพนักงาน");
+      if (!staff) {
+        Swal.fire({
+          icon: 'warning',
+          title: 'ข้อผิดพลาด',
+          text: 'กรุณาเลือกพนักงาน',
+          confirmButtonText: 'ตกลง'
+        });
+        return;
+      }
+
+      Swal.fire({
+        title: 'กำลังโหลดข้อมูล...',
+        text: 'กรุณารอสักครู่',
+        allowOutsideClick: false,
+        didOpen: () => {
+          Swal.showLoading();
+        }
+      });
 
       const callbackName = "renderIncomplete" + Math.floor(Math.random() * 100000);
       const script = document.createElement("script");
       window[callbackName] = function(response) {
+        Swal.close(); // ปิด SweetAlert เมื่อโหลดข้อมูลเสร็จ
         delete window[callbackName];
         document.body.removeChild(script);
         renderIncomplete(response);
@@ -104,19 +152,27 @@
 
       response.data.forEach(row => {
         const tr = document.createElement("tr");
+        // สร้างข้อมูลผู้แจ้งที่รวมกัน
+        const combinedInfoParts = [];
+        if (row.name) combinedInfoParts.push(row.name);
+        if (row.houseNumber) combinedInfoParts.push(`บ้านเลขที่ ${row.houseNumber}`);
+        if (row.villageNumber) combinedInfoParts.push(`หมู่ที่ ${row.villageNumber}`);
+        if (row.subdistrict) combinedInfoParts.push(row.subdistrict);
+        
+        // ใช้ join('  ') เพื่อคั่นด้วยเว้นวรรค 2 เคาะ และ filter(Boolean) เพื่อกรองค่าว่างออก
+        const combinedInfo = combinedInfoParts.filter(Boolean).join('  ');
+
         tr.innerHTML = `
-          <td>${row.name || "-"}</td>
-          <td>${row.subdistrict || "-"}</td>
-          <td>${row.villageNumber || "-"}</td>
-          <td>${row.phone || "-"}</td>
-          <td></td>
-        `;
+          <td>${combinedInfo || "-"}</td>
+          <td class="col-phone-number">${row.phone || "-"}</td>
+          <td></td> <td></td> <td></td> <td></td> `;
         tbody.appendChild(tr);
       });
 
+      // เพิ่มแถวว่างสำหรับกรอกข้อมูลเพิ่มเติม (ถ้าต้องการ)
       for (let i = 0; i < 2; i++) {
         const emptyRow = document.createElement("tr");
-        emptyRow.innerHTML = `<td colspan="4">&nbsp;</td>`;
+        emptyRow.innerHTML = `<td colspan="5">&nbsp;</td>`;
         tbody.appendChild(emptyRow);
       }
     }
@@ -130,45 +186,97 @@
 
     function editEntry(encoded) {
       const row = JSON.parse(decodeURIComponent(encoded));
-      alert("(ตัวอย่าง) แก้ไขข้อมูล: " + row.name);
+      Swal.fire({
+        icon: 'info',
+        title: 'ตัวอย่างการแก้ไข',
+        text: `แก้ไขข้อมูล: ${row.name}`,
+        confirmButtonText: 'ตกลง'
+      });
     }
 
     function deleteEntry(timestamp) {
-      if (confirm("ต้องการลบรายการนี้ใช่หรือไม่?")) {
-        const callbackName = "deleteCb" + Math.floor(Math.random() * 100000);
-        window[callbackName] = function(response) {
-          delete window[callbackName];
-          alert("ลบเรียบร้อยแล้ว");
-          loadIncomplete();
-        };
-        const script = document.createElement("script");
-        script.src = `${SCRIPT_URL}?action=deleteByTimestamp&timestamp=${encodeURIComponent(timestamp)}&callback=${callbackName}`;
-        document.body.appendChild(script);
-      }
+      Swal.fire({
+        title: 'ยืนยันการลบ',
+        text: "คุณแน่ใจหรือไม่ว่าต้องการลบรายการนี้?",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'ใช่, ลบเลย!',
+        cancelButtonText: 'ยกเลิก'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          Swal.fire({
+            title: 'กำลังลบข้อมูล...',
+            allowOutsideClick: false,
+            didOpen: () => {
+              Swal.showLoading();
+            }
+          });
+          const callbackName = "deleteCb" + Math.floor(Math.random() * 100000);
+          window[callbackName] = function(response) {
+            Swal.close(); // ปิด SweetAlert เมื่อลบข้อมูลเสร็จ
+            delete window[callbackName];
+            if (response.success) {
+              Swal.fire('ลบสำเร็จ!', 'รายการถูกลบเรียบร้อยแล้ว', 'success');
+              loadIncomplete();
+            } else {
+              Swal.fire('เกิดข้อผิดพลาด!', response.message || 'ไม่สามารถลบข้อมูลได้', 'error');
+            }
+          };
+          const script = document.createElement("script");
+          script.src = `${SCRIPT_URL}?action=deleteByTimestamp&timestamp=${encodeURIComponent(timestamp)}&callback=${callbackName}`;
+          document.body.appendChild(script);
+        }
+      });
     }
-  
+    
     function printTable() {
       const printWindow = window.open('', '_blank');
       const style = `<style>
-        body { font-family: 'Prompt', sans-serif; padding: 20px; }
-        h2 { text-align: center; color: #c71585; }
+        body { font-family: 'Prompt', sans-serif; padding: 20px; font-size: 16px; }
+        h2 { text-align: center; color: #c71585; font-size: 16px; }
         table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
-        th { background-color: #ffe4ec; }
+        th, td { border: 1px solid #ccc; padding: 4px; text-align: left; } /* ลด padding ในหน้าพิมพ์เป็น 4px */
+        th { background-color: #ffe4ec; text-align: center; }
+        .col-phone-number { white-space: nowrap; }
       </style>`;
 
       const selectedStaff = document.getElementById("staffFilter").value || "-";
       const currentDate = new Date().toLocaleDateString("th-TH", { year: 'numeric', month: 'long', day: 'numeric' });
-      const logo = '<img src="https://upload.wikimedia.org/wikipedia/commons/b/b1/Seal_of_Ko_Samui.png" style="height:80px; display:block; margin:auto;">';
       const header = `
-        ${logo}
         <h2 style='text-align:center;'>เทศบาลนครเกาะสมุย<br>รายการมอบหมายงานดูดสิ่งปฏิกูล</h2>
         <p style='text-align:center;'>พนักงาน: ${selectedStaff} | วันที่มอบหมาย: ${currentDate}</p>
       `;
+      
+      // ดึง HTML ของตารางปัจจุบัน (ซึ่ง renderIncomplete ได้จัดการการรวมคอลัมน์ไว้แล้ว)
       const tableHTML = document.querySelector('table').outerHTML;
-      const summary = `<p style='margin-top:30px; font-size:16px;'><strong>สรุปผลการทำงาน:</strong> ....................................................<br><strong>รวมค่าบริการ:</strong> ....................................................</p>`;
-      const signature = `<p style='text-align:right; margin-top:50px;'>ผู้มอบหมายงาน ....................................................</p>`;
-      printWindow.document.write(`<html><head><title>พิมพ์รายการ</title>${style}</head><body>${header}${tableHTML}${summary}${signature}</body></html>`);
+
+      // สร้าง div ชั่วคราวเพื่อแก้ไข HTML ของตาราง
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = tableHTML;
+      const printTableElement = tempDiv.querySelector('table');
+      const printTheadRow = printTableElement.querySelector('thead tr');
+
+      // เพิ่มคลาส col-phone-number ให้กับ th เบอร์โทรในตารางพิมพ์
+      const thPhoneNumberPrint = printTheadRow.children[1]; // "เบอร์โทร" คือคอลัมน์ที่ 2 (index 1)
+      if (thPhoneNumberPrint) {
+          thPhoneNumberPrint.classList.add('col-phone-number');
+      }
+
+      // เพิ่มคลาส col-phone-number ให้กับ td เบอร์โทรในแต่ละแถวของ tbody สำหรับพิมพ์
+      const printTbodyRows = printTableElement.querySelectorAll('tbody tr');
+      printTbodyRows.forEach(row => {
+          const tdPhoneNumberPrint = row.children[1]; // "เบอร์โทร" คือคอลัมน์ที่ 2 (index 1)
+          if (tdPhoneNumberPrint) {
+              tdPhoneNumberPrint.classList.add('col-phone-number');
+          }
+      });
+
+      const signature = `<p style='text-align:right; margin-top:50px;'>ลงชื่อ..............................ผู้สั่งออกปฏิบัติงาน</p>`;
+      const summaryAndPerformerSignature = `<p style='margin-top:30px; font-size:16px;'><strong>สรุปผลการทำงาน:</strong> ....................................................<br><strong>รวมค่าบริการ:</strong> ....................................................&nbsp;&nbsp;&nbsp;&nbsp;ลงชื่อ..............................ผู้ปฏิบัติงาน</p>`;
+      
+      printWindow.document.write(`<html><head><title>พิมพ์รายการ</title>${style}</head><body>${header}${tempDiv.innerHTML}${signature}${summaryAndPerformerSignature}</body></html>`);
       printWindow.document.close();
       printWindow.onload = function() {
         printWindow.print();
@@ -176,8 +284,7 @@
     }
   </script>
 
-  <footer style="text-align:center; padding:15px; background-color:#ffe4ec; margin-top:30px; font-size:14px;">
-    ©2025 ระบบ กองช่างสุขาภิบาล โดย นายธีรศักดิ์ พูลเขาล้าน
+  <footer style="text-align:center; padding:15px; background-color:#ffe4ec; margin-top:30px; font-size:16px;"> ©2025 ระบบ กองช่างสุขาภิบาล โดย นายธีรศักดิ์ พูลเขาล้าน
   </footer>
 </body>
 </html>
